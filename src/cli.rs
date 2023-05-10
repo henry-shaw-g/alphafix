@@ -1,3 +1,4 @@
+use std::io::{self, Write, Read};
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 use clap::{Parser};
@@ -64,6 +65,9 @@ impl Cli {
             };
         }
         println!("Finished.");
+        if !self.auto {
+            Self::term_pause();
+        }
     }
 
     fn get_open_path(&self, path_str: &str) -> PathBuf {
@@ -98,6 +102,12 @@ impl Cli {
         new_path.push(file_stem);
         new_path.set_extension(file_ext);
         new_path
+    }
+
+    fn term_pause() {
+        print!("Press enter to continue...");
+        io::stdout().flush().unwrap();
+        io::stdin().read(&mut [0u8, 0]).unwrap();
     }
 }
 
