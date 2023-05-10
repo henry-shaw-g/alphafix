@@ -45,7 +45,6 @@ pub fn set_alpha(img: &mut image::RgbaImage, a: u8) {
 // inspired by: https://github.com/urraka/alpha-bleeding
 pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) -> Result<(), Box<dyn Error>> {
     let alpha = if set_opaque {255} else {0};
-    println!("alpha: {alpha}");
     let (width, height) = (img.width() as i32, img.height() as i32);
     // make a transparent double queue
     let mut queue0: Vec<(i32, i32)> = Vec::new();

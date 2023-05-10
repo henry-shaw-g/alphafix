@@ -43,7 +43,7 @@ impl Cli {
                     continue;
                 },
             };
-            println!("Opened image, path: {}", open_path.display());
+            if self.verbose {println!("Opened image, path: {}", open_path.display());}
             // convert to rgba8
             let img_rgba8 = match img_dynamic.as_mut_rgba8() {
                 Some(img) => img,
@@ -52,16 +52,18 @@ impl Cli {
                     continue;
                 },
             };
-            // proccess and save
+            // proccess
             let save_path = self.get_save_path(&open_path);
             println!("Fixing image, path: {}", save_path.display());
             match alpha_fix::fix_alpha(img_rgba8, self.opaque) {
                 Err(err) => eprintln!("Error fixing image: {}", err.to_string()),
                 _ => (),
             }
+            // save
             match img_dynamic.save(&save_path) {
-                Ok(_) => println!("Saved image, path: {}", save_path.display()),
+                Ok(_) if self.verbose => println!("Saved image, path: {}", save_path.display()),
                 Err(_) => eprintln!("Error saving image: {}", save_path.display()),
+                _ => (),
             };
         }
         println!("Finished.");
