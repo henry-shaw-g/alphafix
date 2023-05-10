@@ -3,12 +3,6 @@ name = "alpha_fix"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name = "alphafix"
-path = "src/cli/main.rs"
-
 [dependencies]
 log = "0.4.17"
 image = "0.24.5"

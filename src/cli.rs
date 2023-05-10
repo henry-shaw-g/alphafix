@@ -9,7 +9,7 @@ pub struct Cli {
     #[arg(required = true, num_args = 1..)]
     pub paths: Vec<String>,
 
-    /// append to the output filenames for all images (avoid overriding)
+    /// append to the output filenames for all images (by default _fixed is appeneded)
     #[arg(long = "append")]
     pub append: Option<String>,
 
@@ -17,6 +17,10 @@ pub struct Cli {
     #[arg(long = "dir")]
     pub dir: Option<String>,
   
+    /// skip prompts
+    #[arg(long = "auto")]
+    pub auto: bool,
+
     /// (DEBUG)
     #[arg(long = "verbose")]
     pub verbose: bool,
@@ -33,8 +37,8 @@ impl Cli {
             let open_path = self.get_open_path(path);
             let mut img_dynamic = match alpha_fix::open_image_file(&open_path) {
                 Ok(img) => img,
-                Err(_) => {
-                    log::warn!("Can't open image, path: {}", open_path.display());
+                Err(err) => {
+                    eprintln!("Could not open image, path: {}, error: {}", open_path.display(), err.to_string());
                     continue;
                 },
             };
@@ -43,7 +47,7 @@ impl Cli {
             let img_rgba8 = match img_dynamic.as_mut_rgba8() {
                 Some(img) => img,
                 None => {
-                    log::warn!("Can't process image, path: {}", open_path.display());
+                    eprintln!("Could not process image, path: {}", open_path.display());
                     continue;
                 },
             };
@@ -51,12 +55,12 @@ impl Cli {
             let save_path = self.get_save_path(&open_path);
             println!("Fixing image, path: {}", save_path.display());
             match alpha_fix::fix_alpha(img_rgba8, self.opaque) {
-                Err(err) => println!("Error processing image: {}", err.to_string()),
+                Err(err) => eprintln!("Error fixing image: {}", err.to_string()),
                 _ => (),
             }
             match img_dynamic.save(&save_path) {
                 Ok(_) => println!("Saved image, path: {}", save_path.display()),
-                Err(_) => println!("ERROR: Can't save image, path: {}", save_path.display()),
+                Err(_) => eprintln!("Error saving image: {}", save_path.display()),
             };
         }
         println!("Finished.");
@@ -75,16 +79,18 @@ impl Cli {
         let file_ext: &OsStr = path.extension().unwrap();
 
         let mut new_path = PathBuf::new();
-        if let Some(dir_str) = &self.dir {
-            new_path.push(dir_str);
+        new_path.push(if let Some(dir_str) = &self.dir {
+            dir_str.as_ref()
         }
         else {
-            new_path.push(file_parent);
-        }
+            file_parent
+        });
+        file_stem.push(if let Some(app_str) = &self.append {
+            app_str
+        } else {
+            "_fixed"
+        });
 
-        if let Some(app_str) = &self.append {
-            file_stem.push(app_str);
-        }
         if self.opaque {
             file_stem.push("_opaque");
         }
@@ -100,13 +106,51 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_save_path_0() {
+    fn cli_many_0() {
+        let input = ["exe", "test/pngs/gummy_worm_idk.png", "test/pngs/navball_velocity_prograde.png", "--dir=test/dest"];
+        let args: Cli = Cli::parse_from(input);
+        args.run();
+    }
+
+    #[test]
+    fn cli_many_1() {
+        let input = ["exe", "test/pngs/gummy_worm_idk.png", "test/pngs/navball_velocity_prograde.png", "--dir=test/dest", "--opaque"];
+        let args: Cli = Cli::parse_from(input);
+        args.run();
+    }
+
+    #[test]
+    fn cli_many_2() {
+        let input = ["exe", "test/pngs/gummy_worm_idk.png", "test/pngs/navball_velocity_prograde.png", "--dir=test/dest", "--append=_fixed"];
+        let args: Cli = Cli::parse_from(input);
+        args.run();
+    }
+
+    // test alpha fix with opaque flag 
+    #[test]
+    fn cli_opaque_0() {
+        let input = ["exe", "test/pngs/gummy_worm_idk.png", "--opaque"];
+        let args: Cli = Cli::parse_from(input);
+        args.run();
+    }
+
+    // test alpha fix with opaque flag and appendeded arg
+    #[test]
+    fn cli_opaque_1() {
+        let input = ["exe", "test/pngs/gummy_worm_idk.png", "--opaque", "--dir=test/dest"];
+        let args: Cli = Cli::parse_from(input);
+        args.run();
+    }
+
+    #[test]
+    fn cli_get_save_path_0() {
         let cli: Cli = Cli {
             paths: Vec::new(),
             append: Some("_fix".to_string()),
             dir: Some("D:/idk/".to_string()),
             opaque: false,
             verbose: false,
+            auto: false,
         };
 
         let in_path = PathBuf::from("homework/hentai/blurry.png");
@@ -116,13 +160,14 @@ mod tests {
     }
 
     #[test]
-    fn test_get_save_path_1() {
+    fn cli_get_save_path_1() {
         let cli: Cli = Cli {
             paths: Vec::new(),
             append: Some("_fix".to_string()),
             dir: Some("D:/idk/".to_string()),
             opaque: true,
             verbose: false,
+            auto: false,
         };
 
         let in_path = PathBuf::from("homework/hentai/blurry.png");

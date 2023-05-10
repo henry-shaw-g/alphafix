@@ -1,7 +1,4 @@
-// alpha_fix lib
-// notes:
-//  * only supports 8 bit color depth
-//  * only outputs in rgba
+use std::error::Error;
 
 use image::Rgba;
 
@@ -10,11 +7,6 @@ enum BleedStage {
     Unprocessed,
     Staged,
     Processed,
-}
-
-pub enum OpenImageError {
-    IoError(std::io::Error),
-    DecodeError(image::ImageError),
 }
 
 const NEIGHBORS: [(i8, i8); 8] = [
@@ -51,7 +43,7 @@ pub fn set_alpha(img: &mut image::RgbaImage, a: u8) {
 // propogate the color of opaque pixels to transparent pixels
 // meant to mitigate issues with image sampling of scaled images (Roblox image handling)
 // inspired by: https://github.com/urraka/alpha-bleeding
-pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) {
+pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) -> Result<(), Box<dyn Error>> {
     let alpha = if set_opaque {255} else {0};
     println!("alpha: {alpha}");
     let (width, height) = (img.width() as i32, img.height() as i32);
@@ -135,15 +127,15 @@ pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) {
         queue0.clear();
         std::mem::swap(&mut queue0, &mut queue1);
     }
+
+    Ok(())
 }
 
-pub fn open_image_file(path: impl AsRef<std::path::Path>) -> Result<image::DynamicImage, OpenImageError> {
-    let img_reader = match image::io::Reader::open(path) {
-        Ok(img_reader) => img_reader,
-        Err(error) => return Err(OpenImageError::IoError(error)),
-    };
-    match img_reader.decode() {
-        Ok(img) => Ok(img),
-        Err(error) => Err(OpenImageError::DecodeError(error)),
-    }
+pub fn open_image_file(path: impl AsRef<std::path::Path>) -> Result<image::DynamicImage, Box<dyn Error>> {
+    Ok(image::io::Reader::open(path)?.decode()?)
+}
+
+pub fn save_image_file(path: impl AsRef<std::path::Path>) -> Result<image::DynamicImage, Box<dyn Error>> {
+    // TODO:
+    unimplemented!();
 }
