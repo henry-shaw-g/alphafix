@@ -1,5 +1,7 @@
 [package]
 name = "alphafix"
+authors = ["hs747 <henryshaw747@gmail.com"]
+description = "CLI & file explorer tool to bleed colors to transparent pixels for game engines"
 version = "0.1.0"
 edition = "2021"
 
