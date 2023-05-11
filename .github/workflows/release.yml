@@ -1,0 +1,28 @@
+# primarily using to build for mac-os
+
+name: release-build
+
+run-name: ${{ github.actor }} initiated release build
+
+on: workflow_dispatch
+
+jobs: 
+  build-macos-x86:
+    runs-on: macos
+    steps:
+    - name: Install rust
+      uses: actions-rs/toolchain@v1
+      with: 
+        toolchain: stable
+
+    - name: Checkout repo
+      uses: actions/checkout@v1
+
+    - name: Build binary
+      run: cargo build --release --locked --verbose
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: alphafix-macos-x86
+        path: target/release/alphafix
