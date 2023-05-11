@@ -52,8 +52,8 @@ impl Cli {
                     return false;
                 },
             };
+
             // proccess
-            let save_path = self.get_save_path(&open_path);
             if self.opaque {
                 if self.verbose {println!("Making image opaque")};
                 alpha_fix::set_alpha(img_rgba8, 255);
@@ -68,7 +68,9 @@ impl Cli {
                     _ => (),
                 }
             }
+            
             // save
+            let save_path = self.get_save_path(&open_path);
             match img_dynamic.save(&save_path) {
                 Ok(_) if self.verbose => println!("Saved image, path: {}", save_path.display()),
                 Err(err) => {
@@ -91,9 +93,6 @@ impl Cli {
     }
 
     fn get_save_path(&self, path: &PathBuf) -> PathBuf {
-        if !(self.dir.is_some() || self.append.is_some() || self.opaque) {
-            return path.clone();
-        }
         let file_parent: &Path = path.parent().unwrap();
         let mut file_stem: OsString = path.file_stem().unwrap().to_os_string();
         let file_ext: &OsStr = path.extension().unwrap();
@@ -107,7 +106,7 @@ impl Cli {
         });
         file_stem.push(if let Some(app_str) = &self.append {
             app_str
-        } 
+        }
         else if self.opaque {
             "_opaque"
         }
