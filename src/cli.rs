@@ -62,7 +62,7 @@ impl Cli {
             // save
             match img_dynamic.save(&save_path) {
                 Ok(_) if self.verbose => println!("Saved image, path: {}", save_path.display()),
-                Err(_) => eprintln!("Error saving image: {}", save_path.display()),
+                Err(err) => eprintln!("Error saving image: {}, error: {}", save_path.display(), err.to_string()),
                 _ => (),
             };
         }
