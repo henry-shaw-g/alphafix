@@ -32,7 +32,7 @@ pub struct Cli {
 }
 
 impl Cli {
-    pub fn run(&self) {
+    pub fn run(&self) -> bool {
         for path in self.paths.iter() {
             // open from file
             let open_path = self.get_open_path(path);
@@ -40,7 +40,7 @@ impl Cli {
                 Ok(img) => img,
                 Err(err) => {
                     eprintln!("Could not open image, path: {}, error: {}", open_path.display(), err.to_string());
-                    continue;
+                    return false;
                 },
             };
             if self.verbose {println!("Opened image, path: {}", open_path.display());}
@@ -49,27 +49,35 @@ impl Cli {
                 Some(img) => img,
                 None => {
                     eprintln!("Could not process image, path: {}", open_path.display());
-                    continue;
+                    return false;
                 },
             };
             // proccess
             let save_path = self.get_save_path(&open_path);
             println!("Fixing image, path: {}", save_path.display());
             match alpha_fix::fix_alpha(img_rgba8, self.opaque) {
-                Err(err) => eprintln!("Error fixing image: {}", err.to_string()),
+                Err(err) => {
+                    eprintln!("Error fixing image: {}", err.to_string());
+                    return false;
+                }
                 _ => (),
             }
             // save
             match img_dynamic.save(&save_path) {
                 Ok(_) if self.verbose => println!("Saved image, path: {}", save_path.display()),
-                Err(err) => eprintln!("Error saving image: {}, error: {}", save_path.display(), err.to_string()),
+                Err(err) => {
+                    eprintln!("Error saving image: {}, error: {}", save_path.display(), err.to_string());
+                    return false;
+                }
                 _ => (),
             };
         }
+
         println!("Finished.");
         if !self.auto {
             Self::term_pause();
         }
+        return true;
     }
 
     fn get_open_path(&self, path_str: &str) -> PathBuf {
