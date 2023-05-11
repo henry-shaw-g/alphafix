@@ -43,8 +43,7 @@ pub fn set_alpha(img: &mut image::RgbaImage, a: u8) {
 // propogate the color of opaque pixels to transparent pixels
 // meant to mitigate issues with image sampling of scaled images (Roblox image handling)
 // inspired by: https://github.com/urraka/alpha-bleeding
-pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) -> Result<(), Box<dyn Error>> {
-    let alpha = if set_opaque {255} else {0};
+pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
     let (width, height) = (img.width() as i32, img.height() as i32);
     // make a transparent double queue
     let mut queue0: Vec<(i32, i32)> = Vec::new();
@@ -82,7 +81,6 @@ pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) -> Result<(), Box
             }
         }
     }
-
     
     // until first queue is empty
     while !queue0.is_empty() {
@@ -111,7 +109,7 @@ pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) -> Result<(), Box
             if c > 0 {
                 r /= c; g /= c; b /= c;
                 let pixel = img.get_pixel_mut(x as u32, y as u32);
-                *pixel = Rgba([r as u8, g as u8, b as u8, alpha]);
+                *pixel = Rgba([r as u8, g as u8, b as u8, 0 ]);
             }
             // TODO: Handle unforseen case where we don't mod a pixel in this queue (might propogate grey and be ugly)
         }

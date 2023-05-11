@@ -54,13 +54,19 @@ impl Cli {
             };
             // proccess
             let save_path = self.get_save_path(&open_path);
-            println!("Fixing image, path: {}", save_path.display());
-            match alpha_fix::fix_alpha(img_rgba8, self.opaque) {
-                Err(err) => {
-                    eprintln!("Error fixing image: {}", err.to_string());
-                    return false;
+            if self.opaque {
+                if self.verbose {println!("Making image opaque")};
+                alpha_fix::set_alpha(img_rgba8, 255);
+            }
+            else {
+                if self.verbose {println!("Fixing image");}
+                match alpha_fix::fix_alpha(img_rgba8) {
+                    Err(err) => {
+                        eprintln!("Error fixing image: {}", err.to_string());
+                        return false;
+                    }
+                    _ => (),
                 }
-                _ => (),
             }
             // save
             match img_dynamic.save(&save_path) {
@@ -101,13 +107,13 @@ impl Cli {
         });
         file_stem.push(if let Some(app_str) = &self.append {
             app_str
-        } else {
+        } 
+        else if self.opaque {
+            "_opaque"
+        }
+        else {
             "_fixed"
         });
-
-        if self.opaque {
-            file_stem.push("_opaque");
-        }
 
         new_path.push(file_stem);
         new_path.set_extension(file_ext);
