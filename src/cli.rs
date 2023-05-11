@@ -36,7 +36,7 @@ impl Cli {
         for path in self.paths.iter() {
             // open from file
             let open_path = self.get_open_path(path);
-            let mut img_dynamic = match alpha_fix::open_image_file(&open_path) {
+            let mut img_dynamic = match alphafix::open_image_file(&open_path) {
                 Ok(img) => img,
                 Err(err) => {
                     eprintln!("Could not open image, path: {}, error: {}", open_path.display(), err.to_string());
@@ -56,11 +56,11 @@ impl Cli {
             // proccess
             if self.opaque {
                 if self.verbose {println!("Making image opaque")};
-                alpha_fix::set_alpha(img_rgba8, 255);
+                alphafix::set_alpha(img_rgba8, 255);
             }
             else {
                 if self.verbose {println!("Fixing image");}
-                match alpha_fix::fix_alpha(img_rgba8) {
+                match alphafix::fix_alpha(img_rgba8) {
                     Err(err) => {
                         eprintln!("Error fixing image: {}", err.to_string());
                         return false;
