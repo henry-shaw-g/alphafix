@@ -133,8 +133,3 @@ pub fn fix_alpha(img: &mut image::RgbaImage, set_opaque: bool) -> Result<(), Box
 pub fn open_image_file(path: impl AsRef<std::path::Path>) -> Result<image::DynamicImage, Box<dyn Error>> {
     Ok(image::io::Reader::open(path)?.decode()?)
 }
-
-pub fn save_image_file(path: impl AsRef<std::path::Path>) -> Result<image::DynamicImage, Box<dyn Error>> {
-    // TODO:
-    unimplemented!();
-}
