@@ -1,7 +1,7 @@
 use std::io::{self, Write, Read};
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
-use clap::{Parser};
+use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(name = "alphafix")]
