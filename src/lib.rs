@@ -9,7 +9,7 @@ enum BleedStage {
     Processed,
 }
 
-const NEIGHBORS: [(i8, i8); 8] = [
+const NEIGHBORS: [(i32, i32); 8] = [
     ( 1,  0),
     ( 1, -1),
     ( 0, -1),
@@ -20,15 +20,15 @@ const NEIGHBORS: [(i8, i8); 8] = [
     ( 1,  1),
 ];
 
-fn neighbors(x: i32, y: i32, w: i32, h: i32) -> impl Iterator<Item = (i32, i32)> {
+fn neighbors(x: u32, y: u32, w: u32, h: u32) -> impl Iterator<Item = (u32, u32)> {
     return NEIGHBORS.iter()
         .filter(move |(u, v)| {
-            let x1 = x + *u as i32;
-            let y1 = y + *v as i32;
-            x1 > 0 && y1 > 0 && x1 < w && y1 < h
+            let x1 = x as i32 + *u;
+            let y1 = y as i32+ *v;
+            x1 > 0 && y1 > 0 && x1 < w as i32 && y1 < h as i32
         })
         .map(move |(u, v)| {
-            (x + *u as i32, y + *v as i32)
+            (x.wrapping_add_signed(*u), y.wrapping_add_signed(*v))
         });
 }
 
@@ -44,10 +44,10 @@ pub fn set_alpha(img: &mut image::RgbaImage, a: u8) {
 // meant to mitigate issues with image sampling of scaled images (Roblox image handling)
 // inspired by: https://github.com/urraka/alpha-bleeding
 pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
-    let (width, height) = (img.width() as i32, img.height() as i32);
+    let (width, height) = (img.width(), img.height());
     // make a transparent double queue
-    let mut queue0: Vec<(i32, i32)> = Vec::new();
-    let mut queue1: Vec<(i32, i32)> = Vec::new();
+    let mut queue0: Vec<(u32, u32)> = Vec::new();
+    let mut queue1: Vec<(u32, u32)> = Vec::new();
     let mut stages: Vec<BleedStage> = vec![BleedStage::Unprocessed; (width * height) as usize];
     // mark non-transparent pixels as processed
     for y in 0..width {
@@ -91,8 +91,8 @@ pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
             let mut r: u32 = 0; let mut g: u32 = 0; let mut b: u32 = 0;
             // sum colors of proccessed neighbors
             for (x1, y1) in neighbors(x, y, width, height) {
-                let index1 = (y1 * width + x1) as usize;
-                let stage = stages[index1];
+                let stage_index = (y1 * width + x1) as usize;
+                let stage = stages[stage_index];
                 if stage == BleedStage::Processed {
                     let pixel = img.get_pixel(x1 as u32, y1 as u32);
                     let Rgba([r1, g1, b1, _]) = *pixel;
@@ -102,7 +102,7 @@ pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
                     b += b1 as u32;
                 } 
                 else if stage == BleedStage::Unprocessed {
-                    stages[index1] = BleedStage::Staged;
+                    stages[stage_index] = BleedStage::Staged;
                     queue1.push((x1, y1));
                 }
             }
@@ -111,7 +111,6 @@ pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
                 let pixel = img.get_pixel_mut(x as u32, y as u32);
                 *pixel = Rgba([r as u8, g as u8, b as u8, 0 ]);
             }
-            // TODO: Handle unforseen case where we don't mod a pixel in this queue (might propogate grey and be ugly)
         }
         
         // set pixels to processed
