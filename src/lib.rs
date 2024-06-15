@@ -24,8 +24,8 @@ fn neighbors(x: u32, y: u32, w: u32, h: u32) -> impl Iterator<Item = (u32, u32)>
     return NEIGHBORS.iter()
         .filter(move |(u, v)| {
             let x1 = x as i32 + *u;
-            let y1 = y as i32+ *v;
-            x1 > 0 && y1 > 0 && x1 < w as i32 && y1 < h as i32
+            let y1 = y as i32 + *v;
+            x1 >= 0 && y1 >= 0 && x1 < (w as i32) && y1 < (h as i32)
         })
         .map(move |(u, v)| {
             (x.wrapping_add_signed(*u), y.wrapping_add_signed(*v))
@@ -85,8 +85,8 @@ pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
     // until first queue is empty
     while !queue0.is_empty() {
         // set queue pixel color to sum of neighboring processed pixels
-        for (x, y) in queue0.iter() {
-            let (x, y) = (*x, *y);
+        for (x, y) in queue0.iter().cloned() {
+            let (x, y) = (x, y);
             let mut c: u32 = 0;
             let mut r: u32 = 0; let mut g: u32 = 0; let mut b: u32 = 0;
             // sum colors of proccessed neighbors
@@ -94,7 +94,7 @@ pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
                 let stage_index = (y1 * width + x1) as usize;
                 let stage = stages[stage_index];
                 if stage == BleedStage::Processed {
-                    let pixel = img.get_pixel(x1 as u32, y1 as u32);
+                    let pixel = img.get_pixel(x1, y1);
                     let Rgba([r1, g1, b1, _]) = *pixel;
                     c += 1;
                     r += r1 as u32;
@@ -108,13 +108,13 @@ pub fn fix_alpha(img: &mut image::RgbaImage) -> Result<(), Box<dyn Error>> {
             }
             if c > 0 {
                 r /= c; g /= c; b /= c;
-                let pixel = img.get_pixel_mut(x as u32, y as u32);
+                let pixel = img.get_pixel_mut(x, y);
                 *pixel = Rgba([r as u8, g as u8, b as u8, 0 ]);
             }
         }
         
         // set pixels to processed
-        for &(x, y) in queue0.iter() {
+        for (x, y) in queue0.iter().cloned() {
             let index = (y * width + x) as usize;
             stages[index] = BleedStage::Processed;
         }
