@@ -1,7 +1,6 @@
 # alphafix
 
-Tool to bleed opaque pixel color into transparent pixels. Designed with producing images for the Robox platform in mind.
-
+Tool to bleed opaque pixel color into transparent pixels.
 ### Installation
 
 The package can be installed and built to a binary with cargo
